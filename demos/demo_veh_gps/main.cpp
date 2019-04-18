@@ -29,12 +29,13 @@
 #include "chrono_vehicle/utils/ChVehiclePath.h"
 #include "chrono_vehicle/wheeled_vehicle/utils/ChWheeledVehicleIrrApp.h"
 
-#include "chrono_models/vehicle/hmmwv/HMMWV.h"
-
 #include "chrono_thirdparty/filesystem/path.h"
-#include "chrono_sensor/ChSensor.h"
+
+#include "HMMWV_Sensor.h"
+#include "chrono_sensor/Sensor.h"
 
 using namespace chrono;
+using namespace chrono::sensor;
 using namespace chrono::geometry;
 using namespace chrono::vehicle;
 using namespace chrono::vehicle::hmmwv;
@@ -65,7 +66,7 @@ DrivelineType drive_type = DrivelineType::FWD;
 SteeringType steering_type = SteeringType::PITMAN_ARM;
 
 // Visualization type for vehicle parts (PRIMITIVES, MESH, or NONE)
-VisualizationType chassis_vis_type = VisualizationType::NONE;
+VisualizationType chassis_vis_type = VisualizationType::PRIMITIVES;
 VisualizationType suspension_vis_type = VisualizationType::NONE;
 VisualizationType steering_vis_type = VisualizationType::NONE;
 VisualizationType wheel_vis_type = VisualizationType::MESH;
@@ -73,9 +74,9 @@ VisualizationType tire_vis_type = VisualizationType::NONE;
 
 // Input file names for the path-follower driver model
 //std::string path_file("paths/straight.txt");
-std::string path_file("paths/curve.txt");
+//std::string path_file("paths/curve.txt");
 //std::string path_file("paths/NATO_double_lane_change.txt");
-//std::string path_file("paths/ISO_double_lane_change.txt");
+std::string path_file("paths/ISO_double_lane_change.txt");
 
 // Initial vehicle location and orientation
 ChVector<> initLoc(-125, -125, 0.5);
@@ -213,11 +214,11 @@ int main(int argc, char* argv[]) {
   vehicle::SetDataPath(std::string(CHRONO_VEHICLE_DATA_DIR));
 
   // ------------------------------
-  // Create the vehicle and terrain
+  // Create the vehicle, terrain and sensors
   // ------------------------------
 
   // Create the HMMWV vehicle, set parameters, and initialize
-  HMMWV_Full my_hmmwv;
+  HMMWV_Sensor my_hmmwv;
   my_hmmwv.SetContactMethod(contact_method);
   my_hmmwv.SetChassisFixed(false);
   my_hmmwv.SetInitPosition(ChCoordsys<>(initLoc, initRot));
@@ -227,6 +228,10 @@ int main(int argc, char* argv[]) {
   my_hmmwv.SetTireType(tire_model);
   my_hmmwv.SetTireStepSize(tire_step_size);
   my_hmmwv.SetVehicleStepSize(step_size);
+
+  Sensor sensor1;
+
+  my_hmmwv.AddSensor(sensor1);
   my_hmmwv.Initialize();
 
   my_hmmwv.SetChassisVisualizationType(chassis_vis_type);

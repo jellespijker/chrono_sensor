@@ -1,11 +1,5 @@
 project(DEMO_VEH_GPS)
 
-
-
-#--------------------------------------------------------------
-# Return now if Chrono or a required component was not found.
-#--------------------------------------------------------------
-
 if (NOT Chrono_FOUND)
     message("Could not find Chrono or one of its required modules")
     return()
@@ -13,10 +7,8 @@ endif ()
 
 include_directories(../chrono_sensor/include)
 include_directories(${CHRONO_INCLUDE_DIRS})
-#include_directories(${CHRONO_DATA_DIR})
-#include_directories(${CHRONO_VEHICLE_DATA_DIR})
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES main.cpp HMMWV_Sensor.h HMMWV_Sensor.cpp)
 
 add_executable(DEMO_VEH_GPS "")
 target_sources(DEMO_VEH_GPS
