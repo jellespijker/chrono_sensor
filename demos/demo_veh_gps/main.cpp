@@ -35,10 +35,10 @@
 #include "chrono_sensor/Sensor.h"
 
 using namespace chrono;
-using namespace chrono::sensor;
 using namespace chrono::geometry;
 using namespace chrono::vehicle;
 using namespace chrono::vehicle::hmmwv;
+using namespace chrono::vehicle::sensor;
 
 
 // =============================================================================

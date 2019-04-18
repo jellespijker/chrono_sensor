@@ -27,12 +27,13 @@
 #include "ChSensor.h"
 
 namespace chrono {
+namespace vehicle {
 namespace sensor {
 
 class Sensor : public ChSensor {
 
-
 }; // Sensor
 } /// sensor
+} /// vehicle
 } /// chrono
 #endif

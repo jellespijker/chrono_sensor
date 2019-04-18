@@ -24,9 +24,10 @@
 #include "chrono_sensor/Sensor.h"
 
 namespace chrono {
+namespace vehicle {
 namespace sensor {
-
 
 } /// sensor
 } /// chrono
+} /// vehicle
 

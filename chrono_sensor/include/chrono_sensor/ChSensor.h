@@ -31,12 +31,13 @@ namespace chrono {
 // Forward references
 class ChSystem;
 
+namespace vehicle {
 namespace sensor {
 class ChApi ChSensor : public ChPhysicsItem {
 
-
 };
 } /// sensor
+} /// vehicle
 } /// chrono
 
 
