@@ -34,6 +34,7 @@
 
 #include "chrono_sensor/ChFunction_SensorNoise.h"
 #include "chrono_sensor/ChFunction_SensorBias.h"
+#include "chrono_sensor/ChFunction_SensorDigitize.h"
 
 using namespace chrono;
 
@@ -130,4 +131,13 @@ TEST(Function_Bias, clone) {
   auto f_bias_clone = f_bias.Clone();
   ASSERT_EQ(f_bias, *f_bias_clone);
   delete f_bias_clone;
+}
+
+TEST(Function_Digitize, single_value) {
+  double bits = 4;
+  double min = 0.0;
+  double max = 50.;
+  double res = (max - min) / pow(2, bits);
+  ChFunction_SensorDigitize f_dig(bits, min, max);
+  ASSERT_EQ(f_dig.Get_y(3.45), res * round(3.45 / res));
 }

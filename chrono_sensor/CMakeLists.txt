@@ -4,7 +4,8 @@ add_library(chrono_sensor SHARED
         src/ChSensor.cpp
         src/Sensor.cpp
         src/ChFunction_SensorNoise.cpp
-        src/ChFunction_SensorBias.cpp)
+        src/ChFunction_SensorBias.cpp
+        src/ChFunction_SensorDigitize.cpp)
 
 target_include_directories(chrono_sensor PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
