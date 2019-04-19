@@ -17,7 +17,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 # PROJECT CHRONO PACKAGE
 if (ENABLE_DEMOS)
     find_package(Chrono
-            COMPONENTS Irrlicht Vehicle
+            COMPONENTS Irrlicht Vehicle Postprocess
             CONFIG)
 else ()
     find_package(Chrono

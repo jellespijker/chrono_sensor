@@ -20,9 +20,17 @@ if (NOT googletest_POPULATED)
     )
 endif ()
 
-include_directories(../chrono_sensor/include)
+find_package(Boost REQUIRED)
+if (NOT Boost_FOUND)
+    message(STATUS "Could not find Boost needed for statistics testing")
+    message(STATUS "SKIPPING statistics testing")
+    add_definitions(-DSTAT_TEST)
+endif ()
 
-set(SOURCE_FILES main.cpp src/chrono_sensor_tests.cpp)
+include_directories(../chrono_sensor/include)
+include_directories(${BOOST_INCLUDEDIR})
+
+set(SOURCE_FILES main.cpp src/chrono_sensor_tests.cpp src/chrono_sensor_function_tests.cpp)
 
 add_executable(chrono_sensor_tests "")
 target_sources(chrono_sensor_tests
@@ -31,8 +39,9 @@ target_sources(chrono_sensor_tests
         )
 target_link_libraries(chrono_sensor_tests
         PRIVATE
-            chrono_sensor
-            gtest_main)
+        chrono_sensor
+        ${Boost_LIBRARIES}
+        gtest_main)
 enable_testing()
 add_test(
         NAME google_test

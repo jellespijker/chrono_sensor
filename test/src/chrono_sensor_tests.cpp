@@ -6,9 +6,9 @@
 #include "chrono_sensor/ChSensor.h"
 
 using namespace chrono;
-using namespace chrono::sensor;
+using namespace chrono::vehicle::sensor;
 
 TEST(sensor, test1) {
-  auto test = ChSensor();
+  auto test = 1;
   ASSERT_EQ(1, 1);
 }
