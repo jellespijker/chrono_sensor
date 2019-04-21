@@ -1,11 +1,19 @@
 project(chrono_sensor VERSION 0.1 LANGUAGES CXX)
 
-add_library(chrono_sensor SHARED
-        src/ChSensor.cpp
-        src/Sensor.cpp
-        src/ChFunction_SensorNoise.cpp
-        src/ChFunction_SensorBias.cpp
-        src/ChFunction_SensorDigitize.cpp)
+set(SRC_FILES
+        src/Accelerometer.cpp
+        )
+
+set(HDR_FILES
+        include/chrono_sensor/ChSensor.h
+        include/chrono_sensor/ChFunction_Sensor.h
+        include/chrono_sensor/ChFunction_SensorNoise.h
+        #        include/chrono_sensor/ChFunction_SensorBias.h
+        #        include/chrono_sensor/ChFunction_SensorDigitize.h
+        )
+
+add_library(chrono_sensor SHARED ${SRC_FILES} ${HDR_FILES})
+
 
 target_include_directories(chrono_sensor PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

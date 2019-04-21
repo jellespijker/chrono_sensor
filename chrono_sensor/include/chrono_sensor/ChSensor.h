@@ -24,17 +24,75 @@
 #ifndef CHRONO_SENSOR_CHSENSOR_H
 #define CHRONO_SENSOR_CHSENSOR_H
 
-#include <chrono/physics/ChPhysicsItem.h>
+#include "chrono_vehicle/ChVehicle.h"
+#include "chrono_sensor/ChFunction_Sensor.h"
 
 namespace chrono {
-
-// Forward references
-class ChSystem;
-
 namespace vehicle {
 namespace sensor {
-class ChApi ChSensor : public ChPhysicsItem {
 
+/// Base class for a vehicle sensor system.
+template<class T>
+class CH_VEHICLE_API ChSensor {
+ public:
+  ChSensor(ChVehicle &vehicle, double sample_rate = 0.)
+      : m_vehicle(vehicle), m_sample_rate(sample_rate), m_log_filename("") {};
+
+  virtual ~ChSensor() = default;
+
+  /// Initialize this Sensor System
+  virtual void Initialize() = 0;
+
+  void Set_Input(std::shared_ptr<T> input) { m_input = input; };
+
+  void Set_Output(std::shared_ptr<T> output) { m_output = output; };
+
+  std::shared_ptr<T> Get_Input() { return m_input; };
+
+  std::shared_ptr<T> Get_Output() { return m_output; };
+
+  /// Update the state of this driver system at the current time.
+  virtual void Synchronize(double time) = 0;
+
+  /// Advance the state of this driver system by the specified time step
+  virtual void Advance(double step) = 0;
+
+  /// Initialize output file for recording sensor inputs.
+  bool LogInit(const std::string &filename) {
+    m_log_filename = filename;
+
+    std::ofstream ofile(filename.c_str(), std::ios::out);
+    if (!ofile)
+      return false;
+
+    ofile << "Time, Input, Output" << std::endl;
+    ofile.close();
+    return true;
+  };
+
+  /// Record the current sensor inputs to the log file.
+  bool Log(double time) {
+    if (m_log_filename.empty())
+      return false;
+
+    std::ofstream ofile(m_log_filename.c_str(), std::ios::app);
+    if (!ofile)
+      return false;
+
+    ofile << time << ", " << *m_input << ", " << *m_output << std::endl;
+    ofile.close();
+    return true;
+  }
+
+ protected:
+  ChVehicle &m_vehicle;
+  double m_sample_rate;
+  std::shared_ptr<T> m_input;
+  std::shared_ptr<T> m_output;
+  std::vector<std::shared_ptr<ChFunction_Sensor<T>>> m_transform;
+
+ private:
+  std::string m_log_filename;
 };
 } /// sensor
 } /// vehicle

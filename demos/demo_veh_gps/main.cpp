@@ -115,7 +115,7 @@ const std::string pov_dir = out_dir + "/POVRAY";
 bool povray_output = false;
 
 // Vehicle state output (forced to true if povray output enabled)
-bool state_output = false;
+bool state_output = true;
 int filter_window_size = 20;
 
 // =============================================================================
@@ -229,9 +229,9 @@ int main(int argc, char* argv[]) {
   my_hmmwv.SetTireStepSize(tire_step_size);
   my_hmmwv.SetVehicleStepSize(step_size);
 
-  Sensor sensor1;
+  Sensor *sensor1 = new Sensor(my_hmmwv.GetVehicle());
 
-  my_hmmwv.AddSensor(sensor1);
+//  my_hmmwv.AddSensor(sensor1);
   my_hmmwv.Initialize();
 
   my_hmmwv.SetChassisVisualizationType(chassis_vis_type);
@@ -390,6 +390,7 @@ int main(int argc, char* argv[]) {
     double lat_acc_CG = lat_acc_GC_filter.Add(acc_CG.y());
     double fwd_acc_driver = fwd_acc_driver_filter.Add(acc_driver.x());
     double lat_acc_driver = lat_acc_driver_filter.Add(acc_driver.y());
+    GetLog() << my_hmmwv.GetChassisBody()->GetPos_dtdt() << "\n";
 
     // End simulation
     if (time >= t_end)
@@ -476,5 +477,6 @@ int main(int argc, char* argv[]) {
   if (state_output)
     csv.write_to_file(out_dir + "/state.out");
 
+  delete sensor1;
   return 0;
 }

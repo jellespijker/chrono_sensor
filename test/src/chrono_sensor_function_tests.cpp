@@ -37,6 +37,7 @@
 #include "chrono_sensor/ChFunction_SensorDigitize.h"
 
 using namespace chrono;
+using namespace chrono::vehicle::sensor;
 
 #ifndef STAT_TEST // Don't perform statistical tests if boost is not found
 using namespace boost::accumulators;
@@ -49,7 +50,7 @@ TEST(Function_Noise, stddev_mean_single_value) {
   double mean_val = 0.5;
   double stddev_val = 0.2;
 
-  ChFunction_SensorNoise f_noise(mean_val, stddev_val);
+  ChFunction_SensorNoise<> f_noise(mean_val, stddev_val);
 
   accumulator_set<double, stats<tag::mean, tag::variance>> acc;
 
@@ -60,9 +61,10 @@ TEST(Function_Noise, stddev_mean_single_value) {
     double noise = y_noise - y;
     acc(noise);
   }
-
-  ASSERT_NEAR(mean(acc), mean_val, mean_val / 12.);
-  ASSERT_NEAR(sqrt(variance(acc)), stddev_val, stddev_val / 12.);
+  auto m = mean(acc);
+  auto st = sqrt(variance(acc));
+  ASSERT_NEAR(mean(acc), mean_val, mean_val / 30.);
+  ASSERT_NEAR(sqrt(variance(acc)), stddev_val, stddev_val / 30.);
 }
 
 TEST(Function_Noise, stddev_mean_vector) {
@@ -70,17 +72,18 @@ TEST(Function_Noise, stddev_mean_vector) {
   f_ramp.Set_ang(0.1);
   f_ramp.Set_y0(0.4);
 
-  double mean_val = 0.5;
-  double stddev_val = 0.2;
+  ChVector<> mean_val(0.5, 0.25, 0.);
+  ChVector<> stddev_val(0.2, 0.4, 0.);
 
-  ChFunction_SensorNoise f_noise(mean_val, stddev_val);
+  ChFunction_SensorNoise<ChVector<>> f_noise(mean_val, stddev_val);
 
   accumulator_set<double, stats<tag::mean, tag::variance>> acc_x;
   accumulator_set<double, stats<tag::mean, tag::variance>> acc_y;
   accumulator_set<double, stats<tag::mean, tag::variance>> acc_z;
 
-  for (int i = 0; i < 1000; i++) {
-    ChVector<> x = ChVector<>((double) i / 50.0, (double) i / 50.0, (double) i / 50.0);
+  for (int i = 0; i < 10000; i++) {
+    double id = static_cast<double>(i) / 50.;
+    ChVector<> x = ChVector<>(id);
     ChVector<> y = ChVector<>(f_ramp.Get_y(x.x()), f_ramp.Get_y(x.y()), f_ramp.Get_y(x.z()));
     ChVector<> y_noise = f_noise.Get_y(y);
     ChVector<> noise = y_noise - y;
@@ -89,21 +92,20 @@ TEST(Function_Noise, stddev_mean_vector) {
     acc_z(noise.z());
   }
 
-  ASSERT_NEAR(mean(acc_x), mean_val, mean_val / 12.);
-  ASSERT_NEAR(sqrt(variance(acc_x)), stddev_val, stddev_val / 12.);
-  ASSERT_NEAR(mean(acc_y), mean_val, mean_val / 12.);
-  ASSERT_NEAR(sqrt(variance(acc_y)), stddev_val, stddev_val / 12.);
-  ASSERT_NEAR(mean(acc_z), mean_val, mean_val / 12.);
-  ASSERT_NEAR(sqrt(variance(acc_z)), stddev_val, stddev_val / 12.);
+  ASSERT_NEAR(mean(acc_x), mean_val.x(), mean_val.x() / 30.);
+  ASSERT_NEAR(sqrt(variance(acc_x)), stddev_val.x(), stddev_val.x() / 30.);
+  ASSERT_NEAR(mean(acc_y), mean_val.y(), mean_val.y() / 30.);
+  ASSERT_NEAR(sqrt(variance(acc_y)), stddev_val.y(), stddev_val.y() / 30.);
+  ASSERT_NEAR(mean(acc_z), mean_val.z(), mean_val.z() / 30.);
+  ASSERT_NEAR(sqrt(variance(acc_z)), stddev_val.z(), stddev_val.z() / 30.);
 }
-
 #endif
 
 TEST(Function_Noise, clone) {
   double mean_val = 0.5;
   double stddev_val = 0.2;
 
-  ChFunction_SensorNoise f_noise(mean_val, stddev_val);
+  ChFunction_SensorNoise<> f_noise(mean_val, stddev_val);
   auto f_noise_clone = f_noise.Clone();
   ASSERT_EQ(f_noise, *f_noise_clone);
   delete f_noise_clone;
@@ -112,21 +114,21 @@ TEST(Function_Noise, clone) {
 TEST(Function_Bias, single_value) {
   double bias = 5.;
   double x = 1.;
-  ChFunction_SensorBias f_bias(bias);
+  ChFunction_SensorBias<> f_bias(bias);
   ASSERT_EQ(x + bias, f_bias.Get_y(x));
 }
 
 TEST(Function_Bias, vector) {
   ChVector<> bias(5., 4., 3.);
   ChVector<> x(2., 4., 8.);
-  ChFunction_SensorBias f_bias(bias);
+  ChFunction_SensorBias<ChVector<>> f_bias(bias);
   auto ret = f_bias.Get_y(x);
   ASSERT_EQ(x + bias, f_bias.Get_y(x));
 }
 
 TEST(Function_Bias, clone) {
   double bias = 5.;
-  ChFunction_SensorBias f_bias(bias);
+  ChFunction_SensorBias<> f_bias(bias);
 
   auto f_bias_clone = f_bias.Clone();
   ASSERT_EQ(f_bias, *f_bias_clone);
@@ -138,6 +140,19 @@ TEST(Function_Digitize, single_value) {
   double min = 0.0;
   double max = 50.;
   double res = (max - min) / pow(2, bits);
-  ChFunction_SensorDigitize f_dig(bits, min, max);
+  ChFunction_SensorDigitize<> f_dig(bits, max - min);
   ASSERT_EQ(f_dig.Get_y(3.45), res * round(3.45 / res));
 }
+
+TEST(Function_Digitize, vector) {
+  ChVector<> bits(4., 12., 14.);
+  ChVector<> min(0.0);
+  ChVector<> max(50.);
+  ChVector<> res;
+  ChFunction_SensorDigitize<ChVector<>> f_dig(bits, max - min);
+  for (int i = 0; i < 3; ++i) {
+    res[i] = (max[i] - min[i]) / pow(2., bits[i]);
+    ASSERT_EQ(f_dig.Get_y(ChVector<>(3.45))[i], res[i] * round(3.45 / res[i]));
+  }
+}
+

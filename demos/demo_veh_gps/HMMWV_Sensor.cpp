@@ -27,7 +27,7 @@ namespace chrono {
 namespace vehicle {
 namespace hmmwv {
 
-void HMMWV_Sensor::AddSensor(sensor::Sensor sensor) {
+void HMMWV_Sensor::AddSensor(sensor::Sensor &sensor) {
 
 }
 

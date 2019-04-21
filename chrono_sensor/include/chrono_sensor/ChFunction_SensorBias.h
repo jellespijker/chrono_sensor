@@ -24,27 +24,51 @@
 #ifndef CHRONO_SENSOR_CHFUNCTION_SENSORBIAS_H
 #define CHRONO_SENSOR_CHFUNCTION_SENSORBIAS_H
 
-#include "chrono/motion_functions/ChFunction_Base.h"
+#include "ChFunction_Sensor.h"
 
 namespace chrono {
-
-class ChApi ChFunction_SensorBias : public ChFunction {
+namespace vehicle {
+namespace sensor {
+template<class T = double>
+class ChApi ChFunction_SensorBias : public ChFunction_Sensor<T> {
  public:
-  ChFunction_SensorBias(double bias = 0.);
-  ChFunction_SensorBias(ChVector<> bias);
-  ChFunction_SensorBias(const ChFunction_SensorBias &other);
+  explicit ChFunction_SensorBias<T>(const T &bias) : m_bias(bias) {};
+  ChFunction_SensorBias<T>(const ChFunction_SensorBias<T> &other) : m_bias(other.m_bias) {}
 
-  ChFunction_SensorBias *Clone() const override;
-  bool operator==(const ChFunction_SensorBias &rhs) const;
-  bool operator!=(const ChFunction_SensorBias &rhs) const;
-  double Get_y(double x) const override;
-  virtual ChVector<> Get_y(ChVector<> &vec) const;
-  //Todo: Create 1ste and 2nd derivatives
+  ChFunction_SensorBias<T> *Clone() const override {
+    return new ChFunction_SensorBias<T>(*this);
+  }
 
- private:
-  double m_bias;
-  ChVector<> m_bias_v;
+  FunctionType Get_Type() const override {
+    return FUNCT_BIAS;
+  }
+
+  bool operator==(const ChFunction_SensorBias &rhs) const {
+    return m_bias == rhs.m_bias;
+  }
+
+  bool operator!=(const ChFunction_SensorBias &rhs) const {
+    return !(rhs == *this);
+  }
+
+  T Get_y(const T &x) const override {
+    return x + m_bias;
+  }
+
+  T Get_Bias() const {
+    return m_bias;
+  }
+
+  void Get_Bias(T Bias) {
+    m_bias = Bias;
+  }
+
+ protected:
+  T m_bias;
 };
+
+} /// sensor
+} /// vehicle
 } /// chrono
 
 #endif //CHRONO_SENSOR_CHFUNCTION_SENSORBIAS_H

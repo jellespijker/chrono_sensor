@@ -33,7 +33,7 @@ namespace hmmwv {
 
 class HMMWV_Sensor : public HMMWV_Full {
  public:
-  void AddSensor(sensor::Sensor sensor);
+  void AddSensor(sensor::Sensor &sensor);
 
 }; // HMMWV_Sensor
 } /// hmmwv
