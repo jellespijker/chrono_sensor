@@ -67,6 +67,12 @@ class ChApi ChFunction_SensorBias : public ChFunction_Sensor<T> {
   T m_bias;
 };
 
+template<>
+ChQuaternion<> ChFunction_SensorBias<ChQuaternion<>>::Get_y(const ChQuaternion<> &x) const {
+  ChQuaternion<> y = x * m_bias;
+  y.Normalize();
+  return y;
+}
 } /// sensor
 } /// vehicle
 } /// chrono

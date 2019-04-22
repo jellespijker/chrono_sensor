@@ -43,8 +43,8 @@ enum FunctionType {
 template<class T = double>
 class ChApi ChFunction_Sensor {
  public:
-  ChFunction_Sensor() = default;
-  ChFunction_Sensor(const ChFunction_Sensor &other) = default;
+  ChFunction_Sensor() : M_BSL(1., BDF_STEP_LOW) { M_BSL.Normalize(); };
+  ChFunction_Sensor(const ChFunction_Sensor &other) : M_BSL(other.M_BSL) {};
   virtual ~ChFunction_Sensor() = default;
 
   /// "Virtual" copy constructor.
@@ -103,7 +103,28 @@ class ChApi ChFunction_Sensor {
     int version = marchive.VersionRead<ChFunction_Sensor<T>>();
   }
 
+ private:
+  ChQuaternion<> M_BSL;
 };
+
+template<>
+ChQuaternion<> ChFunction_Sensor<ChQuaternion<>>::Get_y_dx(const ChQuaternion<> &x) const {
+  // Todo: Check if this is correct
+  ChQuaternion<> dy = Get_y(x * M_BSL) - Get_y(x);
+  dy /= BDF_STEP_LOW;
+  dy.Normalize();
+  return dy;
+}
+
+template<>
+ChQuaternion<> ChFunction_Sensor<ChQuaternion<>>::Get_y_dxdx(const ChQuaternion<> &x) const {
+  // Todo: Check if this is correct
+  ChQuaternion<> dy = Get_y_dx(x * M_BSL) - Get_y_dx(x);
+  dy /= BDF_STEP_LOW;
+  dy.Normalize();
+  return dy;
+}
+
 } /// sensor
 } /// vehicle
 } /// chrono

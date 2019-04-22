@@ -122,8 +122,18 @@ TEST(Function_Bias, vector) {
   ChVector<> bias(5., 4., 3.);
   ChVector<> x(2., 4., 8.);
   ChFunction_SensorBias<ChVector<>> f_bias(bias);
-  auto ret = f_bias.Get_y(x);
   ASSERT_EQ(x + bias, f_bias.Get_y(x));
+}
+
+TEST(Function_Bias, quaternion) {
+  ChQuaternion<> initial_rot = Q_from_AngAxis(20 * CH_C_DEG_TO_RAD, ChVector<>(0., 0., 1.));
+  ChQuaternion<> bias = Q_from_AngAxis(25 * CH_C_DEG_TO_RAD, ChVector<>(0., 0., 1.));
+  ChFunction_SensorBias<ChQuaternion<>> f_bias(bias);
+  auto ret = f_bias.Get_y(initial_rot);
+  ChVector<> va(5., 0., 0.);
+  ChVector<> vb = ret.Rotate(va);
+  ASSERT_NEAR(vb.x(), 3.53553390593, 1e-6);
+  ASSERT_NEAR(vb.y(), 3.53553390593, 1e-6);
 }
 
 TEST(Function_Bias, clone) {
