@@ -42,7 +42,7 @@ namespace sensor {
 template<class T = double>
 class ChApi ChFunction_SensorNoise : public ChFunction_Sensor<T> {
  public:
-  ChFunction_SensorNoise() {
+  ChFunction_SensorNoise() : m_mean(0.), m_stddev(0.) {
     m_gen = std::make_shared<std::default_random_engine>(Get_Seed());
   };
 

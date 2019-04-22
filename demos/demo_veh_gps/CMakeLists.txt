@@ -8,7 +8,7 @@ endif ()
 include_directories(../chrono_sensor/include)
 include_directories(${CHRONO_INCLUDE_DIRS})
 
-set(SOURCE_FILES main.cpp HMMWV_Sensor.h HMMWV_Sensor.cpp)
+set(SOURCE_FILES main.cpp)
 
 add_executable(DEMO_VEH_GPS "")
 target_sources(DEMO_VEH_GPS

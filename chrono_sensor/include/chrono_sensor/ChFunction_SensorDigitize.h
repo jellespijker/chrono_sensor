@@ -33,6 +33,8 @@ namespace sensor {
 template<class T = double>
 class ChApi ChFunction_SensorDigitize : public ChFunction_Sensor<T> {
  public:
+  ChFunction_SensorDigitize<T>() : m_range(0.), m_bits(0.), m_res(0.) {};
+
   ChFunction_SensorDigitize<T>(const T &bits, const T &range) : m_range(range) {
     Set_Bits(bits);
   }

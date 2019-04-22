@@ -21,16 +21,27 @@
 // SOFTWARE.
 //
 
-#include "HMMWV_Sensor.h"
+#ifndef CHRONO_SENSOR_ACCELEROMETER_H
+#define CHRONO_SENSOR_ACCELEROMETER_H
+
+#include "ChSensor.h"
+#include "chrono_sensor/ChFunction_SensorNoise.h"
+#include "chrono_sensor/ChFunction_SensorDigitize.h"
 
 namespace chrono {
 namespace vehicle {
-namespace hmmwv {
+namespace sensor {
 
-void HMMWV_Sensor::AddSensor(sensor::Sensor &sensor) {
+class CH_VEHICLE_API Accelerometer : public ChSensor<ChVector<>> {
+ public:
+  Accelerometer(ChVehicle &vehicle, double sample_rate);
+  void Initialize(const double &bits, const ChVector<> &range, const ChVector<> &mean, const ChVector<> &stddev);
 
-}
+  std::shared_ptr<ChFunction_SensorDigitize<ChVector<>>> Get_DigitalTransform();
+  std::shared_ptr<ChFunction_SensorNoise<ChVector<>>> Get_NoiseTransform();
 
-} /// hmmwv
+};
+} /// sensor
 } /// vehicle
 } /// chrono
+#endif //CHRONO_SENSOR_ACCELEROMETER_H

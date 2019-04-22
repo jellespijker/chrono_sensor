@@ -24,6 +24,8 @@
 #ifndef CHRONO_SENSOR_CHSENSOR_H
 #define CHRONO_SENSOR_CHSENSOR_H
 
+#include <vector>
+
 #include "chrono_vehicle/ChVehicle.h"
 #include "chrono_sensor/ChFunction_Sensor.h"
 
@@ -35,27 +37,53 @@ namespace sensor {
 template<class T>
 class CH_VEHICLE_API ChSensor {
  public:
+  ChSensor() : m_sample_rate(0.), m_log_filename(""), m_prev_sample_time(0.), m_sample(true) {}
+
   ChSensor(ChVehicle &vehicle, double sample_rate = 0.)
-      : m_vehicle(vehicle), m_sample_rate(sample_rate), m_log_filename("") {};
+      : m_vehicle(vehicle), m_sample_rate(sample_rate), m_log_filename(""), m_prev_sample_time(0.), m_sample(true) {};
 
   virtual ~ChSensor() = default;
 
   /// Initialize this Sensor System
-  virtual void Initialize() = 0;
+  virtual void Initialize() {};
 
-  void Set_Input(std::shared_ptr<T> input) { m_input = input; };
+  ChVehicle &Get_Vehicle() const { return m_vehicle; }
 
-  void Set_Output(std::shared_ptr<T> output) { m_output = output; };
+  void Set_Vehicle(ChVehicle &Vehicle) { m_vehicle = &Vehicle; }
 
-  std::shared_ptr<T> Get_Input() { return m_input; };
+  double Get_SampleRate() const { return m_sample_rate; }
 
-  std::shared_ptr<T> Get_Output() { return m_output; };
+  void Set_SampleRate(double SampleRate) { m_sample_rate = SampleRate; }
+
+  void Set_Input(T input) { m_input = input; };
+
+  T &Get_Input() { return m_input; };
+
+  void Set_Output(T output) { m_output = output; };
+
+  T &Get_Output() { return m_output; };
 
   /// Update the state of this driver system at the current time.
-  virtual void Synchronize(double time) = 0;
+  virtual void Synchronize(double time) {
+    double dt = time - m_prev_sample_time;
+    if (dt >= m_sample_rate) {
+      m_sample = true;
+      m_prev_sample_time = time;
+    } else {
+      m_sample = false;
+    }
+  };
 
   /// Advance the state of this driver system by the specified time step
-  virtual void Advance(double step) = 0;
+  virtual void Advance(double step) {
+    if (!m_sample) // Only perform measurement at specified sample rate
+      return;
+
+    m_output = m_input;
+    for (auto transform : m_transform) {
+      m_output = transform->Get_y(m_output);
+    }
+  }
 
   /// Initialize output file for recording sensor inputs.
   bool LogInit(const std::string &filename) {
@@ -87,9 +115,11 @@ class CH_VEHICLE_API ChSensor {
  protected:
   ChVehicle &m_vehicle;
   double m_sample_rate;
-  std::shared_ptr<T> m_input;
-  std::shared_ptr<T> m_output;
+  T m_input;
+  T m_output;
   std::vector<std::shared_ptr<ChFunction_Sensor<T>>> m_transform;
+  double m_prev_sample_time;
+  bool m_sample;
 
  private:
   std::string m_log_filename;
@@ -97,6 +127,4 @@ class CH_VEHICLE_API ChSensor {
 } /// sensor
 } /// vehicle
 } /// chrono
-
-
 #endif //CHRONO_SENSOR_CHSENSOR_H

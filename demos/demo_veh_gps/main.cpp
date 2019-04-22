@@ -31,8 +31,10 @@
 
 #include "chrono_thirdparty/filesystem/path.h"
 
-#include "HMMWV_Sensor.h"
-#include "chrono_sensor/Sensor.h"
+#include "chrono_models/vehicle/hmmwv/HMMWV.h"
+#include "chrono_sensor/Accelerometer.h"
+
+#include "chrono_postprocess/ChGnuPlot.h"
 
 using namespace chrono;
 using namespace chrono::geometry;
@@ -98,7 +100,7 @@ double step_size = 2e-3;
 double tire_step_size = 1e-3;
 
 // Simulation end time
-double t_end = 100;
+double t_end = 20;
 
 // Render FPS
 double fps = 60;
@@ -125,7 +127,7 @@ class ChDriverSelector : public irr::IEventReceiver {
  public:
 
 #ifdef USE_PID
-  ChDriverSelector(const ChVehicle& vehicle, ChPathFollowerDriver* driver_follower, ChIrrGuiDriver* driver_gui)
+  ChDriverSelector(const ChVehicle &vehicle, ChPathFollowerDriver *driver_follower, ChIrrGuiDriver *driver_gui)
       : m_vehicle(vehicle),
         m_driver_follower(driver_follower),
         m_driver_gui(driver_gui),
@@ -139,10 +141,10 @@ class ChDriverSelector : public irr::IEventReceiver {
           m_driver(m_driver_follower),
           m_using_gui(false) {}
 #endif
-  ChDriver* GetDriver() { return m_driver; }
+  ChDriver *GetDriver() { return m_driver; }
   bool UsingGUI() const { return m_using_gui; }
 
-  virtual bool OnEvent(const irr::SEvent& event) {
+  virtual bool OnEvent(const irr::SEvent &event) {
     // Only interpret keyboard inputs.
     if (event.EventType != irr::EET_KEY_INPUT_EVENT)
       return false;
@@ -187,8 +189,7 @@ class ChDriverSelector : public irr::IEventReceiver {
           m_driver_follower->GetSteeringController().WriteOutputFile(std::string(filename));
         }
         return true;
-      default:
-        break;
+      default:break;
     }
 
     return false;
@@ -196,19 +197,19 @@ class ChDriverSelector : public irr::IEventReceiver {
 
  private:
   bool m_using_gui;
-  const ChVehicle& m_vehicle;
+  const ChVehicle &m_vehicle;
 #ifdef USE_PID
-  ChPathFollowerDriver* m_driver_follower;
+  ChPathFollowerDriver *m_driver_follower;
 #else
   ChPathFollowerDriverXT* m_driver_follower;
 #endif
-  ChIrrGuiDriver* m_driver_gui;
-  ChDriver* m_driver;
+  ChIrrGuiDriver *m_driver_gui;
+  ChDriver *m_driver;
 };
 
 // =============================================================================
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   GetLog() << "Copyright (c) 2017 projectchrono.org\nChrono version: " << CHRONO_VERSION << "\n\n";
   SetChronoDataPath(std::string(CHRONO_DATA_DIR));
   vehicle::SetDataPath(std::string(CHRONO_VEHICLE_DATA_DIR));
@@ -218,7 +219,7 @@ int main(int argc, char* argv[]) {
   // ------------------------------
 
   // Create the HMMWV vehicle, set parameters, and initialize
-  HMMWV_Sensor my_hmmwv;
+  HMMWV_Full my_hmmwv;
   my_hmmwv.SetContactMethod(contact_method);
   my_hmmwv.SetChassisFixed(false);
   my_hmmwv.SetInitPosition(ChCoordsys<>(initLoc, initRot));
@@ -228,10 +229,6 @@ int main(int argc, char* argv[]) {
   my_hmmwv.SetTireType(tire_model);
   my_hmmwv.SetTireStepSize(tire_step_size);
   my_hmmwv.SetVehicleStepSize(step_size);
-
-  Sensor *sensor1 = new Sensor(my_hmmwv.GetVehicle());
-
-//  my_hmmwv.AddSensor(sensor1);
   my_hmmwv.Initialize();
 
   my_hmmwv.SetChassisVisualizationType(chassis_vis_type);
@@ -290,8 +287,8 @@ int main(int argc, char* argv[]) {
   app.SetTimestep(step_size);
 
   // Visualization of controller points (sentinel & target)
-  irr::scene::IMeshSceneNode* ballS = app.GetSceneManager()->addSphereSceneNode(0.1f);
-  irr::scene::IMeshSceneNode* ballT = app.GetSceneManager()->addSphereSceneNode(0.1f);
+  irr::scene::IMeshSceneNode *ballS = app.GetSceneManager()->addSphereSceneNode(0.1f);
+  irr::scene::IMeshSceneNode *ballT = app.GetSceneManager()->addSphereSceneNode(0.1f);
   ballS->getMaterial(0).EmissiveColor = irr::video::SColor(0, 255, 0, 0);
   ballT->getMaterial(0).EmissiveColor = irr::video::SColor(0, 0, 255, 0);
 
@@ -372,25 +369,36 @@ int main(int argc, char* argv[]) {
 
   // Number of simulation steps between miscellaneous events
   double render_step_size = 1 / fps;
-  int render_steps = (int)std::ceil(render_step_size / step_size);
+  int render_steps = (int) std::ceil(render_step_size / step_size);
   double debug_step_size = 1 / debug_fps;
-  int debug_steps = (int)std::ceil(debug_step_size / step_size);
+  int debug_steps = (int) std::ceil(debug_step_size / step_size);
 
   // Initialize simulation frame counter and simulation time
   ChRealtimeStepTimer realtime_timer;
   int sim_frame = 0;
   int render_frame = 0;
 
+  // Initialize Sensor
+  Accelerometer acc_sensor(my_hmmwv.GetVehicle(), 0.02);
+  acc_sensor.Initialize(8., ChVector<>(200.), ChVector<>(0.2), ChVector<>(0.2));
+  ChFunction_Recorder x_i;
+  ChFunction_Recorder x_o;
+  ChFunction_Recorder y_i;
+  ChFunction_Recorder y_o;
+  ChFunction_Recorder z_i;
+  ChFunction_Recorder z_o;
+
+  auto sens_out = std::make_shared<ChVector<>>(0.);
   while (app.GetDevice()->run()) {
     // Extract system state
     double time = my_hmmwv.GetSystem()->GetChTime();
     ChVector<> acc_CG = my_hmmwv.GetVehicle().GetChassisBody()->GetPos_dtdt();
     ChVector<> acc_driver = my_hmmwv.GetVehicle().GetVehicleAcceleration(driver_pos);
+    acc_sensor.Set_Input(acc_driver);
     double fwd_acc_CG = fwd_acc_GC_filter.Add(acc_CG.x());
     double lat_acc_CG = lat_acc_GC_filter.Add(acc_CG.y());
     double fwd_acc_driver = fwd_acc_driver_filter.Add(acc_driver.x());
     double lat_acc_driver = lat_acc_driver_filter.Add(acc_driver.y());
-    GetLog() << my_hmmwv.GetChassisBody()->GetPos_dtdt() << "\n";
 
     // End simulation
     if (time >= t_end)
@@ -417,10 +425,10 @@ int main(int argc, char* argv[]) {
 
     // Update sentinel and target location markers for the path-follower controller.
     // Note that we do this whether or not we are currently using the path-follower driver.
-    const ChVector<>& pS = driver_follower.GetSteeringController().GetSentinelLocation();
-    const ChVector<>& pT = driver_follower.GetSteeringController().GetTargetLocation();
-    ballS->setPosition(irr::core::vector3df((irr::f32)pS.x(), (irr::f32)pS.y(), (irr::f32)pS.z()));
-    ballT->setPosition(irr::core::vector3df((irr::f32)pT.x(), (irr::f32)pT.y(), (irr::f32)pT.z()));
+    const ChVector<> &pS = driver_follower.GetSteeringController().GetSentinelLocation();
+    const ChVector<> &pT = driver_follower.GetSteeringController().GetTargetLocation();
+    ballS->setPosition(irr::core::vector3df((irr::f32) pS.x(), (irr::f32) pS.y(), (irr::f32) pS.z()));
+    ballT->setPosition(irr::core::vector3df((irr::f32) pT.x(), (irr::f32) pT.y(), (irr::f32) pT.z()));
 
     app.BeginScene(true, true, irr::video::SColor(255, 140, 161, 192));
     app.DrawAll();
@@ -456,6 +464,7 @@ int main(int argc, char* argv[]) {
     driver_follower.Synchronize(time);
     driver_gui.Synchronize(time);
     terrain.Synchronize(time);
+    acc_sensor.Synchronize(time);
     my_hmmwv.Synchronize(time, steering_input, braking_input, throttle_input, terrain);
     std::string msg = selector.UsingGUI() ? "GUI driver" : "Follower driver";
     app.Synchronize(msg, steering_input, throttle_input, braking_input);
@@ -465,18 +474,39 @@ int main(int argc, char* argv[]) {
     driver_follower.Advance(step);
     driver_gui.Advance(step);
     terrain.Advance(step);
+    acc_sensor.Advance(step);
     my_hmmwv.Advance(step);
     app.Advance(step);
 
+    x_i.AddPoint(time, acc_sensor.Get_Input().x());
+    y_i.AddPoint(time, acc_sensor.Get_Input().y());
+    z_i.AddPoint(time, acc_sensor.Get_Input().z());
+    x_o.AddPoint(time, acc_sensor.Get_Output().x());
+    y_o.AddPoint(time, acc_sensor.Get_Output().y());
+    z_o.AddPoint(time, acc_sensor.Get_Output().z());
     // Increment simulation frame number
     sim_frame++;
 
     app.EndScene();
   }
 
+  postprocess::ChGnuPlot mplot_x("__tmp_gnuplot_x.gpl");
+  mplot_x.SetGrid();
+  mplot_x.Plot(x_i, "Input");
+  mplot_x.Plot(x_o, "Output");
+
+  postprocess::ChGnuPlot mplot_y("__tmp_gnuplot_y.gpl");
+  mplot_y.SetGrid();
+  mplot_y.Plot(y_i, "Input");
+  mplot_y.Plot(y_o, "Output");
+
+  postprocess::ChGnuPlot mplot_z("__tmp_gnuplot_z.gpl");
+  mplot_z.SetGrid();
+  mplot_z.Plot(z_i, "Input");
+  mplot_z.Plot(z_o, "Output");
+
   if (state_output)
     csv.write_to_file(out_dir + "/state.out");
 
-  delete sensor1;
   return 0;
 }

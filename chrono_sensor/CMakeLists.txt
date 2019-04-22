@@ -8,8 +8,8 @@ set(HDR_FILES
         include/chrono_sensor/ChSensor.h
         include/chrono_sensor/ChFunction_Sensor.h
         include/chrono_sensor/ChFunction_SensorNoise.h
-        #        include/chrono_sensor/ChFunction_SensorBias.h
-        #        include/chrono_sensor/ChFunction_SensorDigitize.h
+        include/chrono_sensor/ChFunction_SensorBias.h
+        include/chrono_sensor/ChFunction_SensorDigitize.h
         )
 
 add_library(chrono_sensor SHARED ${SRC_FILES} ${HDR_FILES})
