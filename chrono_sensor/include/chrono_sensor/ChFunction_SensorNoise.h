@@ -29,6 +29,8 @@
 #include <vector>
 
 #include "ChFunction_Sensor.h"
+
+#include "chrono/core/ChVectorDynamic.h"
 #include "chrono/core/ChVector.h"
 #include <chrono/core/ChQuaternion.h>
 
@@ -46,8 +48,24 @@ class ChApi ChFunction_SensorNoise : public ChFunction_Sensor<T> {
     m_gen = std::make_shared<std::default_random_engine>(Get_Seed());
   };
 
-  ChFunction_SensorNoise(const T &Mean,
-                         const T &Stddev)
+  ChFunction_SensorNoise(const double &Mean,
+                         const double &Stddev)
+      : m_mean(1), m_stddev(1) {
+    *m_mean[0] = Mean;
+    *m_stddev[0] = Stddev;
+    m_gen = std::make_shared<std::default_random_engine>(Get_Seed());
+  };
+
+  ChFunction_SensorNoise(const ChVector<> &Mean,
+                         const ChVector<> &Stddev)
+      : m_mean(3), m_stddev(3) {
+    m_mean.PasteVector(Mean, 0, 0);
+    m_stddev.PasteVector(Stddev, 0, 0);
+    m_gen = std::make_shared<std::default_random_engine>(Get_Seed());
+  };
+
+  ChFunction_SensorNoise(const ChVectorDynamic<> &Mean,
+                         const ChVectorDynamic<> &Stddev)
       : m_mean(Mean), m_stddev(Stddev) {
     m_gen = std::make_shared<std::default_random_engine>(Get_Seed());
   };
@@ -60,10 +78,11 @@ class ChApi ChFunction_SensorNoise : public ChFunction_Sensor<T> {
   };
 
   bool operator==(const ChFunction_SensorNoise &rhs) const {
-    return m_mean == rhs.m_mean &&
-        m_stddev == rhs.m_stddev &&
-        m_gen == rhs.m_gen;
+    return m_gen == rhs.m_gen &&
+        static_cast<ChVectorDynamic<>>(m_mean) == static_cast<ChVectorDynamic<>>(rhs.m_mean) &&
+        static_cast<ChVectorDynamic<>>(m_stddev) == static_cast<ChVectorDynamic<>>(rhs.m_stddev);
   }
+
   bool operator!=(const ChFunction_SensorNoise &rhs) const {
     return !(rhs == *this);
   }
@@ -73,25 +92,34 @@ class ChApi ChFunction_SensorNoise : public ChFunction_Sensor<T> {
   }
 
   T Get_y(const T &x) const {
-    return x + Get_Noise_Scalar(m_mean, m_stddev);
+    assert(m_mean.GetLength() == m_stddev.GetLength());
+    assert(m_mean.GetLength() == 1);
+    return x + Get_Noise_Scalar(*m_mean[0], *m_stddev[0]);
   };
 
-  T Get_Mean() const {
+  ChVectorDynamic<> Get_Mean() const {
     return m_mean;
   }
 
-  void Set_Mean(T Mean) {
+  void Set_Mean(ChVectorDynamic<> Mean) {
     m_mean = Mean;
   }
 
-  T Get_Stddev() const {
+  void Set_Mean(double Mean) {
+    *m_mean[0] = Mean;
+  }
+
+  ChVectorDynamic<> Get_Stddev() const {
     return m_stddev;
   }
 
-  void Set_Stddev(T Stddev) {
+  void Set_Stddev(ChVectorDynamic<> Stddev) {
     m_stddev = Stddev;
   }
 
+  void Set_Stddev(double Stddev) {
+    *m_stddev[0] = Stddev;
+  }
  protected:
   static unsigned int Get_Seed() {
     typedef std::chrono::high_resolution_clock seed_clock;
@@ -106,24 +134,32 @@ class ChApi ChFunction_SensorNoise : public ChFunction_Sensor<T> {
     return dist(*m_gen);
   };
 
-  std::vector<double> Get_Noise(const T mean, const T stddev, const size_t no_elem) const {
-    std::vector<double> vect;
-    for (int i = 0; i < no_elem; ++i) {
-      vect.push_back(Get_Noise_Scalar(mean[i], stddev[i]));
+  ChVectorDynamic<> Get_Noise(const ChVectorDynamic<> mean, const ChVectorDynamic<> stddev) const {
+    assert(mean.GetLength() == stddev.GetLength());
+    ChVectorDynamic<> vect(mean.GetLength());
+    for (int i = 0; i < mean.GetLength(); ++i) {
+      *vect[i] = Get_Noise_Scalar(*mean[i], *stddev[i]);
     }
     return vect;
   };
 
-  T m_mean;
-  T m_stddev;
+  ChVectorDynamic<> m_mean;
+  ChVectorDynamic<> m_stddev;
   std::shared_ptr<std::default_random_engine> m_gen;
 };
 
 template<>
 ChVector<> ChFunction_SensorNoise<ChVector<>>::Get_y(const ChVector<> &x) const {
-  auto noise = Get_Noise(m_mean, m_stddev, 3);
-  ChVector<> noise_vec(noise[0], noise[1], noise[2]);
+  ChVector<> noise_vec = Get_Noise(m_mean, m_stddev).ClipVector(0, 0);
   return x + noise_vec;
+}
+
+template<>
+ChQuaternion<> ChFunction_SensorNoise<ChQuaternion<>>::Get_y(const chrono::ChQuaternion<> &x) const {
+  ChQuaternion<> noise_vec = Get_Noise(m_mean, m_stddev).ClipQuaternion(0, 0).GetNormalized();
+  ChQuaternion<> y = noise_vec * x;
+  y.Normalize();
+  return y;
 }
 } /// sensor
 } /// vehicle

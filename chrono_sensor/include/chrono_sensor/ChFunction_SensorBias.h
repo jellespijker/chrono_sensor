@@ -24,6 +24,10 @@
 #ifndef CHRONO_SENSOR_CHFUNCTION_SENSORBIAS_H
 #define CHRONO_SENSOR_CHFUNCTION_SENSORBIAS_H
 
+#include <typeinfo>
+#include <type_traits>
+
+#include "chrono/core/ChVectorDynamic.h"
 #include "ChFunction_Sensor.h"
 
 namespace chrono {
@@ -32,7 +36,9 @@ namespace sensor {
 template<class T = double>
 class ChApi ChFunction_SensorBias : public ChFunction_Sensor<T> {
  public:
-  explicit ChFunction_SensorBias<T>(const T &bias) : m_bias(bias) {};
+  using bias_t = typename std::conditional<std::is_same<T, ChQuaternion<>>::value, ChQuaternion<>, T>::type;
+  ChFunction_SensorBias<T>(const T &bias) : m_bias(bias) {};
+  ChFunction_SensorBias<T>(const ChVectorDynamic<> &bias) : m_bias(bias) {};
   ChFunction_SensorBias<T>(const ChFunction_SensorBias<T> &other) : m_bias(other.m_bias) {}
 
   ChFunction_SensorBias<T> *Clone() const override {
@@ -55,16 +61,16 @@ class ChApi ChFunction_SensorBias : public ChFunction_Sensor<T> {
     return x + m_bias;
   }
 
-  T Get_Bias() const {
+  bias_t Get_Bias() const {
     return m_bias;
   }
 
-  void Get_Bias(T Bias) {
+  void Set_Bias(bias_t Bias) {
     m_bias = Bias;
   }
 
  protected:
-  T m_bias;
+  bias_t m_bias;
 };
 
 template<>

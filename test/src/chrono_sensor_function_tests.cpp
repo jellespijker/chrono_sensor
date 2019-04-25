@@ -47,8 +47,8 @@ TEST(Function_Noise, stddev_mean_single_value) {
   f_ramp.Set_ang(0.1);
   f_ramp.Set_y0(0.4);
 
-  double mean_val = 0.5;
-  double stddev_val = 0.2;
+  double mean_val(0.5);
+  double stddev_val(0.2);
 
   ChFunction_SensorNoise<> f_noise(mean_val, stddev_val);
 
