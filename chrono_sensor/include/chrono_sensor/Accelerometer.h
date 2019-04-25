@@ -35,7 +35,10 @@ namespace sensor {
 class CH_VEHICLE_API Accelerometer : public ChSensor<ChVector<>> {
  public:
   Accelerometer(ChVehicle &vehicle, double sample_rate);
-  void Initialize(const double &bits, const ChVector<> &range, const ChVector<> &mean, const ChVector<> &stddev);
+  void Initialize(const double &bits,
+                  const ChVector<> &range,
+                  const ChVectorDynamic<> &mean,
+                  const ChVectorDynamic<> &stddev);
 
   std::shared_ptr<ChFunction_SensorDigitize<ChVector<>>> Get_DigitalTransform();
   std::shared_ptr<ChFunction_SensorNoise<ChVector<>>> Get_NoiseTransform();

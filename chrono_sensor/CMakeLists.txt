@@ -2,7 +2,7 @@ project(chrono_sensor VERSION 0.1 LANGUAGES CXX)
 
 set(SRC_FILES
         src/Accelerometer.cpp
-        )
+        src/Gyroscope.cpp)
 
 set(HDR_FILES
         include/chrono_sensor/ChSensor.h
@@ -10,6 +10,7 @@ set(HDR_FILES
         include/chrono_sensor/ChFunction_SensorNoise.h
         include/chrono_sensor/ChFunction_SensorBias.h
         include/chrono_sensor/ChFunction_SensorDigitize.h
+        include/chrono_sensor/Gyroscope.h
         )
 
 add_library(chrono_sensor SHARED ${SRC_FILES} ${HDR_FILES})

@@ -36,8 +36,8 @@ Accelerometer::Accelerometer(ChVehicle &vehicle, double sample_rate) : ChSensor<
 
 void Accelerometer::Initialize(const double &bits,
                                const ChVector<> &range,
-                               const ChVector<> &mean,
-                               const ChVector<> &stddev) {
+                               const ChVectorDynamic<> &mean,
+                               const ChVectorDynamic<> &stddev) {
   Get_DigitalTransform()->Set_Bits(ChVector<>(bits));
   Get_DigitalTransform()->Set_Range(range);
   Get_NoiseTransform()->Set_Mean(mean);

@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
 
   // Initialize Sensor
   Accelerometer acc_sensor(my_hmmwv.GetVehicle(), 0.02);
-  acc_sensor.Initialize(8., ChVector<>(200.), ChVector<>(0.2), ChVector<>(0.2));
+  acc_sensor.Initialize(12., ChVector<>(200.), ChVector<>(0.2), ChVector<>(0.2));
   ChFunction_Recorder x_i;
   ChFunction_Recorder x_o;
   ChFunction_Recorder y_i;
@@ -394,6 +394,7 @@ int main(int argc, char *argv[]) {
     double time = my_hmmwv.GetSystem()->GetChTime();
     ChVector<> acc_CG = my_hmmwv.GetVehicle().GetChassisBody()->GetPos_dtdt();
     ChVector<> acc_driver = my_hmmwv.GetVehicle().GetVehicleAcceleration(driver_pos);
+    GetLog() << my_hmmwv.GetVehicle().GetChassisBody()->coord << "\n";
     acc_sensor.Set_Input(acc_driver);
     double fwd_acc_CG = fwd_acc_GC_filter.Add(acc_CG.x());
     double lat_acc_CG = lat_acc_GC_filter.Add(acc_CG.y());
