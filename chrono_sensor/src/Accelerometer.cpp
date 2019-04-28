@@ -38,7 +38,7 @@ void Accelerometer::Initialize(const double &bits,
                                const ChVector<> &range,
                                const ChVectorDynamic<> &mean,
                                const ChVectorDynamic<> &stddev) {
-  Get_DigitalTransform()->Set_Bits(ChVector<>(bits));
+  Get_DigitalTransform()->Set_Bits(bits);
   Get_DigitalTransform()->Set_Range(range);
   Get_NoiseTransform()->Set_Mean(mean);
   Get_NoiseTransform()->Set_Stddev(stddev);

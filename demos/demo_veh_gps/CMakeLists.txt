@@ -22,7 +22,3 @@ target_link_libraries(DEMO_VEH_GPS
 
 add_definitions(-DCHRONO_DATA_DIR="${CHRONO_DATA_DIR}")
 add_definitions(-DCHRONO_VEHICLE_DATA_DIR="${CHRONO_VEHICLE_DATA_DIR}")
-
-set_target_properties(DEMO_VEH_GPS PROPERTIES
-        COMPILE_FLAGS "${CHRONO_CXX_FLAGS} ${EXTRA_COMPILE_FLAGS}"
-        LINK_FLAGS "${CHRONO_LINKER_FLAGS}")

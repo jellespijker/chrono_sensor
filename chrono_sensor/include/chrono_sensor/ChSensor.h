@@ -37,10 +37,24 @@ namespace sensor {
 template<class T>
 class CH_VEHICLE_API ChSensor {
  public:
-  ChSensor() : m_sample_rate(0.), m_log_filename(""), m_prev_sample_time(0.), m_sample(true) {}
+  ChSensor()
+      : m_sample_rate(0.),
+        m_delay(0.),
+        m_log_filename(""),
+        m_prev_sample_time(0.),
+        m_prev_delay_time(0.),
+        m_sample(true),
+        m_write(true) {}
 
-  ChSensor(ChVehicle &vehicle, double sample_rate = 0.)
-      : m_vehicle(vehicle), m_sample_rate(sample_rate), m_log_filename(""), m_prev_sample_time(0.), m_sample(true) {};
+  ChSensor(ChVehicle &vehicle, double sample_rate = 0., double delay = 0.)
+      : m_vehicle(vehicle),
+        m_sample_rate(sample_rate),
+        m_delay(delay),
+        m_log_filename(""),
+        m_prev_sample_time(0.),
+        m_prev_delay_time(0.),
+        m_sample(true),
+        m_write(true) {};
 
   virtual ~ChSensor() = default;
 
@@ -65,23 +79,20 @@ class CH_VEHICLE_API ChSensor {
 
   /// Update the state of this driver system at the current time.
   virtual void Synchronize(double time) {
-    double dt = time - m_prev_sample_time;
-    if (dt >= m_sample_rate) {
-      m_sample = true;
-      m_prev_sample_time = time;
-    } else {
-      m_sample = false;
-    }
+    update_time(time, m_prev_sample_time, m_sample_rate, m_sample);
+    update_time(time, m_prev_delay_time, m_delay, m_write);
   };
 
   /// Advance the state of this driver system by the specified time step
   virtual void Advance(double step) {
-    if (!m_sample) // Only perform measurement at specified sample rate
-      return;
-
-    m_output = m_input;
-    for (auto transform : m_transform) {
-      m_output = transform->Get_y(m_output);
+    if (m_sample) {
+      m_aquired = m_input;
+      for (auto transform : m_transform) {
+        m_aquired = transform->Get_y(m_aquired);
+      }
+    }
+    if (m_write) {
+      m_output = m_aquired;
     }
   }
 
@@ -116,13 +127,26 @@ class CH_VEHICLE_API ChSensor {
   ChVehicle &m_vehicle;
   double m_sample_rate;
   T m_input;
+  T m_aquired;
   T m_output;
   std::vector<std::shared_ptr<ChFunction_Sensor<T>>> m_transform;
   double m_prev_sample_time;
+  double m_prev_delay_time;
+  double m_delay;
   bool m_sample;
+  bool m_write;
 
  private:
   std::string m_log_filename;
+  void update_time(const double &time, double &prev_time, const double &condition, bool &set_condition) {
+    double dt = time - prev_time;
+    if (dt >= condition) {
+      set_condition = true;
+      prev_time = time;
+    } else {
+      set_condition = false;
+    }
+  }
 };
 } /// sensor
 } /// vehicle

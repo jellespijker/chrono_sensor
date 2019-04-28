@@ -24,18 +24,24 @@
 #ifndef CHRONO_SENSOR_CHFUNCTION_SENSORDIGITIZE_H
 #define CHRONO_SENSOR_CHFUNCTION_SENSORDIGITIZE_H
 
+#include <algorithm>
+#include <type_traits>
 #include "ChFunction_Sensor.h"
+
+#include "chrono/core/ChVectorDynamic.h"
 
 namespace chrono {
 namespace vehicle {
 namespace sensor {
+template<typename T = double>
+using opt_vect_t = typename std::conditional<std::is_same<T, ChVectorDynamic<>>::value, ChVectorDynamic<>, T>::type;
 
-template<class T = double>
+template<typename T = double>
 class ChApi ChFunction_SensorDigitize : public ChFunction_Sensor<T> {
  public:
   ChFunction_SensorDigitize<T>() : m_range(0.), m_bits(0.), m_res(0.) {};
 
-  ChFunction_SensorDigitize<T>(const T &bits, const T &range) : m_range(range) {
+  ChFunction_SensorDigitize<T>(const double &bits, const opt_vect_t<T> &range) : m_range(range) {
     Set_Bits(bits);
   }
 
@@ -50,53 +56,52 @@ class ChApi ChFunction_SensorDigitize : public ChFunction_Sensor<T> {
     return FUNCT_DIGITIZE;
   }
 
-  T Get_y(const T &x) const override {
+  constexpr T Get_y(const T &x) const override {
     return m_res * Round(x / m_res);
   }
 
-  T Get_Range() const {
+  opt_vect_t<T> &Get_Range() const {
     return m_range;
   }
 
-  void Set_Range(T Range) {
+  void Set_Range(const opt_vect_t<T> &Range) {
     m_range = Range;
-    m_res = m_range / Pow(2., m_bits);
+    Set_Resolution(m_range, m_bits);
   }
 
-  T Get_Bits() const {
+  double Get_Bits() const {
     return m_bits;
   }
 
-  void Set_Bits(T Bits) {
+  void Set_Bits(const double Bits) {
     m_bits = Bits;
-    m_res = m_range / Pow(2., m_bits);
+    Set_Resolution(m_range, m_bits);
   }
 
  protected:
-  T Round(const T &x) const { return round(x); };
-  T Pow(const double &base, const T &x) const { return pow(base, x); }
-  T m_range;
-  T m_res;
-  T m_bits;
+  constexpr void Set_Resolution(const opt_vect_t<T> &range, const double bits) {
+    m_res = range / pow(2., bits);
+  }
+
+  constexpr opt_vect_t<T> Round(const T &x) const {
+    opt_vect_t<T> ret(x);
+    if constexpr(std::is_scalar<T>::value) {
+      ret = round(x);
+    } else {
+      if constexpr(std::is_same<T, ChVector<>>::value) {
+        ret.Set(round(x.x()), round(x.y()), round(x.z()));
+      } else {
+        std::for_each(ret.GetAddress()[0], ret.GetAddress()[x.GetLength()], round);
+      }
+    }
+    return ret;
+  };
+
+  opt_vect_t<T> m_range;
+  opt_vect_t<T> m_res;
+  double m_bits;
 };
 
-template<>
-ChVector<> ChFunction_SensorDigitize<ChVector<>>::Round(const ChVector<> &x) const {
-  ChVector<> vec;
-  for (int i = 0; i < 3; ++i) {
-    vec[i] = round(x[i]);
-  }
-  return vec;
-}
-
-template<>
-ChVector<> ChFunction_SensorDigitize<ChVector<>>::Pow(const double &base, const ChVector<> &x) const {
-  ChVector<> vec;
-  for (int i = 0; i < 3; ++i) {
-    vec[i] = pow(base, x[i]);
-  }
-  return vec;
-}
 } /// sensor
 } /// vehicle
 } /// chrono

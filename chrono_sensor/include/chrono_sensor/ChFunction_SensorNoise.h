@@ -91,7 +91,7 @@ class ChApi ChFunction_SensorNoise : public ChFunction_Sensor<T> {
     return FUNCT_NOISE;
   }
 
-  T Get_y(const T &x) const {
+  T Get_y(const T &x) const override {
     assert(m_mean.GetLength() == m_stddev.GetLength());
     assert(m_mean.GetLength() == 1);
     return x + Get_Noise_Scalar(*m_mean[0], *m_stddev[0]);

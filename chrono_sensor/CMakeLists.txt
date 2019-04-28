@@ -20,12 +20,8 @@ target_include_directories(chrono_sensor PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         PRIVATE src)
-
-set_target_properties(chrono_sensor PROPERTIES
-        COMPILE_FLAGS "${CHRONO_CXX_FLAGS} ${EXTRA_COMPILE_FLAGS}"
-        COMPILE_DEFINITIONS "CHRONO_DATA_DIR=\"${CHRONO_DATA_DIR}\""
-        LINK_FLAGS "${CHRONO_LINKER_FLAGS}")
-
+target_compile_options(chrono_sensor PUBLIC -pthread -fopenmp -march=native -msse4.2 -mfpmath=sse -march=native -mavx)
+target_compile_definitions(chrono_sensor PUBLIC "CHRONO_DATA_DIR=\"${CHRONO_DATA_DIR}\"")
 target_link_libraries(chrono_sensor PUBLIC ${CHRONO_LIBRARIES})
 
 # 'make install' to the correct locations (provided by GNUInstallDirs).

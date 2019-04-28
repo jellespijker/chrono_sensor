@@ -155,13 +155,13 @@ TEST(Function_Digitize, single_value) {
 }
 
 TEST(Function_Digitize, vector) {
-  ChVector<> bits(4., 12., 14.);
+  double bits(12.);
   ChVector<> min(0.0);
   ChVector<> max(50.);
   ChVector<> res;
   ChFunction_SensorDigitize<ChVector<>> f_dig(bits, max - min);
   for (int i = 0; i < 3; ++i) {
-    res[i] = (max[i] - min[i]) / pow(2., bits[i]);
+    res[i] = (max[i] - min[i]) / pow(2., bits);
     ASSERT_EQ(f_dig.Get_y(ChVector<>(3.45))[i], res[i] * round(3.45 / res[i]));
   }
 }

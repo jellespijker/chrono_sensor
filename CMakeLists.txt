@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # DEFINE BINARY AND LIBS PATHS ACCORDING TO GNU STANDARDS
 include(GNUInstallDirs)
@@ -27,8 +28,6 @@ if (NOT Chrono_FOUND)
     return()
 endif ()
 include_directories(${CHRONO_INCLUDE_DIRS})
-#set(CHRONO_CXX_FLAGS "-std=c++17 -pthread -fopenmp  -march=native -msse4.2 -mfpmath=sse  -march=native -mavx")
-#message(STATUS "test ${CHRONO_CXX_FLAGS}")
 
 # SOURCE CODE
 add_subdirectory(chrono_sensor)

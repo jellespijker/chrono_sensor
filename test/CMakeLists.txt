@@ -42,9 +42,6 @@ target_link_libraries(chrono_sensor_tests
         chrono_sensor
         ${Boost_LIBRARIES}
         gtest_main)
-set_target_properties(chrono_sensor_tests PROPERTIES
-        COMPILE_FLAGS "${CHRONO_CXX_FLAGS} ${EXTRA_COMPILE_FLAGS}"
-        LINK_FLAGS "${CHRONO_LINKER_FLAGS}")
 enable_testing()
 add_test(
         NAME google_test

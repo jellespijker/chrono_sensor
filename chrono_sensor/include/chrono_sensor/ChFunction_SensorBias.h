@@ -37,6 +37,7 @@ template<class T = double>
 class ChApi ChFunction_SensorBias : public ChFunction_Sensor<T> {
  public:
   using bias_t = typename std::conditional<std::is_same<T, ChQuaternion<>>::value, ChQuaternion<>, T>::type;
+
   ChFunction_SensorBias<T>(const T &bias) : m_bias(bias) {};
   ChFunction_SensorBias<T>(const ChVectorDynamic<> &bias) : m_bias(bias) {};
   ChFunction_SensorBias<T>(const ChFunction_SensorBias<T> &other) : m_bias(other.m_bias) {}
