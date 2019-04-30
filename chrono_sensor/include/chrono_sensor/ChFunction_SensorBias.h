@@ -24,22 +24,18 @@
 #ifndef CHRONO_SENSOR_CHFUNCTION_SENSORBIAS_H
 #define CHRONO_SENSOR_CHFUNCTION_SENSORBIAS_H
 
-#include <typeinfo>
-#include <type_traits>
-
 #include "chrono/core/ChVectorDynamic.h"
 #include "ChFunction_Sensor.h"
 
 namespace chrono {
 namespace vehicle {
 namespace sensor {
-template<class T = double>
+
+template<typename T = double>
 class ChApi ChFunction_SensorBias : public ChFunction_Sensor<T> {
  public:
-  using bias_t = typename std::conditional<std::is_same<T, ChQuaternion<>>::value, ChQuaternion<>, T>::type;
-
-  ChFunction_SensorBias<T>(const T &bias) : m_bias(bias) {};
-  ChFunction_SensorBias<T>(const ChVectorDynamic<> &bias) : m_bias(bias) {};
+  ChFunction_SensorBias<T>() = default;
+  explicit ChFunction_SensorBias<T>(const T &bias) : m_bias(bias) {};
   ChFunction_SensorBias<T>(const ChFunction_SensorBias<T> &other) : m_bias(other.m_bias) {}
 
   ChFunction_SensorBias<T> *Clone() const override {
@@ -59,27 +55,27 @@ class ChApi ChFunction_SensorBias : public ChFunction_Sensor<T> {
   }
 
   T Get_y(const T &x) const override {
-    return x + m_bias;
+    if constexpr(std::is_same<T, ChQuaternion<>>::value) {
+      ChQuaternion<> y = x * m_bias;
+      y.Normalize();
+      return y;
+    } else {
+      return x + m_bias;
+    }
   }
 
-  bias_t Get_Bias() const {
+  T Get_Bias() const {
     return m_bias;
   }
 
-  void Set_Bias(bias_t Bias) {
+  void Set_Bias(const T &Bias) {
     m_bias = Bias;
   }
 
  protected:
-  bias_t m_bias;
+  T m_bias;
 };
 
-template<>
-ChQuaternion<> ChFunction_SensorBias<ChQuaternion<>>::Get_y(const ChQuaternion<> &x) const {
-  ChQuaternion<> y = x * m_bias;
-  y.Normalize();
-  return y;
-}
 } /// sensor
 } /// vehicle
 } /// chrono

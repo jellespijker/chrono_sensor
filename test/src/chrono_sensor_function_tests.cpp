@@ -151,6 +151,7 @@ TEST(Function_Digitize, single_value) {
   double max = 50.;
   double res = (max - min) / pow(2, bits);
   ChFunction_SensorDigitize<> f_dig(bits, max - min);
+  auto test = f_dig.Get_y(3.45);
   ASSERT_EQ(f_dig.Get_y(3.45), res * round(3.45 / res));
 }
 
@@ -166,3 +167,13 @@ TEST(Function_Digitize, vector) {
   }
 }
 
+TEST(Function_Digitize, quaternion) {
+  double bits(12.);
+  ChVector<> min(0.);
+  ChVector<> max(50.);
+  ChQuaternion<> res;
+  ChFunction_SensorDigitize<ChQuaternion<>> f_dig(bits, max - min);
+  auto t = f_dig.Get_y(ChQuaternion<>(3.45, ChVector<>(3.45)));
+  auto r = ChQuaternion<>(0.49950151852068797, ChVector<>(0.50016605009254234));
+  ASSERT_TRUE(t.Equals(r));
+}

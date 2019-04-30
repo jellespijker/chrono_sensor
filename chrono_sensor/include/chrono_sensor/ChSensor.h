@@ -24,8 +24,6 @@
 #ifndef CHRONO_SENSOR_CHSENSOR_H
 #define CHRONO_SENSOR_CHSENSOR_H
 
-#include <vector>
-
 #include "chrono_vehicle/ChVehicle.h"
 #include "chrono_sensor/ChFunction_Sensor.h"
 
@@ -42,7 +40,7 @@ class CH_VEHICLE_API ChSensor {
         m_delay(0.),
         m_log_filename(""),
         m_prev_sample_time(0.),
-        m_prev_delay_time(0.),
+        m_prev_delay_time{0.},
         m_sample(true),
         m_write(true) {}
 
@@ -52,7 +50,7 @@ class CH_VEHICLE_API ChSensor {
         m_delay(delay),
         m_log_filename(""),
         m_prev_sample_time(0.),
-        m_prev_delay_time(0.),
+        m_prev_delay_time{delay},
         m_sample(true),
         m_write(true) {};
 
@@ -80,19 +78,28 @@ class CH_VEHICLE_API ChSensor {
   /// Update the state of this driver system at the current time.
   virtual void Synchronize(double time) {
     update_time(time, m_prev_sample_time, m_sample_rate, m_sample);
-    update_time(time, m_prev_delay_time, m_delay, m_write);
+    auto dt = time - m_prev_delay_time[0];
+    if (dt >= m_sample_rate) {
+      m_write = true;
+      m_prev_delay_time.push_back(time);
+    } else {
+      m_write = false;
+    }
   };
 
   /// Advance the state of this driver system by the specified time step
   virtual void Advance(double step) {
     if (m_sample) {
-      m_aquired = m_input;
+      auto aquired = m_input;
       for (auto transform : m_transform) {
-        m_aquired = transform->Get_y(m_aquired);
+        aquired = transform->Get_y(aquired);
       }
+      m_aquired.push_back(aquired);
     }
     if (m_write) {
-      m_output = m_aquired;
+      m_output = m_aquired[0];
+      m_aquired.erase(m_aquired.begin());
+      m_prev_delay_time.erase(m_prev_delay_time.begin());
     }
   }
 
@@ -118,7 +125,7 @@ class CH_VEHICLE_API ChSensor {
     if (!ofile)
       return false;
 
-    ofile << time << ", " << *m_input << ", " << *m_output << std::endl;
+    ofile << time << ", " << m_input << ", " << m_output << std::endl;
     ofile.close();
     return true;
   }
@@ -127,11 +134,11 @@ class CH_VEHICLE_API ChSensor {
   ChVehicle &m_vehicle;
   double m_sample_rate;
   T m_input;
-  T m_aquired;
+  std::vector<T> m_aquired;
   T m_output;
   std::vector<std::shared_ptr<ChFunction_Sensor<T>>> m_transform;
   double m_prev_sample_time;
-  double m_prev_delay_time;
+  std::vector<double> m_prev_delay_time;
   double m_delay;
   bool m_sample;
   bool m_write;

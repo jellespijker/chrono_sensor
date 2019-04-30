@@ -24,6 +24,8 @@
 #ifndef CHRONO_SENSOR_CHFUNCTION_SENSOR_H
 #define CHRONO_SENSOR_CHFUNCTION_SENSOR_H
 
+#include <typeinfo>
+
 #include "chrono/core/ChApiCE.h"
 #include "chrono/core/ChClassFactory.h"
 
@@ -35,12 +37,10 @@ enum FunctionType {
   FUNCT_CUSTOM,
   FUNCT_NOISE,
   FUNCT_BIAS,
-  FUNCT_DIGITIZE,
-  FUNCT_DRIFT,
-  FUNCT_NON_LINEARITY
+  FUNCT_DIGITIZE
 };
 
-template<class T = double>
+template<typename T = double>
 class ChApi ChFunction_Sensor {
  public:
   ChFunction_Sensor() : M_BSL(1., BDF_STEP_LOW) { M_BSL.Normalize(); };
@@ -64,14 +64,32 @@ class ChApi ChFunction_Sensor {
   /// because this base method already provide a general-purpose numerical differentiation
   /// to get dy/dx only from the Get_y() function. (however, if the analytical derivative
   /// is known, it may better to implement a custom method).
-  virtual T Get_y_dx(const T &x) const { return ((Get_y(x + BDF_STEP_LOW) - Get_y(x)) / BDF_STEP_LOW); }
+  virtual T Get_y_dx(const T &x) const {
+    if constexpr(std::is_same<T, ChQuaternion<>>::value) {
+      ChQuaternion<> dy = Get_y(x * M_BSL) - Get_y(x);
+      dy /= BDF_STEP_LOW;
+      dy.Normalize();
+      return dy;
+    } else {
+      return ((Get_y(x + BDF_STEP_LOW) - Get_y(x)) / BDF_STEP_LOW);
+    }
+  }
 
   /// Return the ddy/dxdx double derivative of the function, at position x.
   /// Note that inherited classes may also avoid overriding this method,
   /// because this base method already provide a general-purpose numerical differentiation
   /// to get ddy/dxdx only from the Get_y() function. (however, if the analytical derivative
   /// is known, it may be better to implement a custom method).
-  virtual T Get_y_dxdx(const T &x) const { return ((Get_y_dx(x + BDF_STEP_LOW) - Get_y_dx(x)) / BDF_STEP_LOW); };
+  virtual T Get_y_dxdx(const T &x) const {
+    if constexpr(std::is_same<T, ChQuaternion<>>::value) {
+      ChQuaternion<> dy = Get_y_dx(x * M_BSL) - Get_y_dx(x);
+      dy /= BDF_STEP_LOW;
+      dy.Normalize();
+      return dy;
+    } else {
+      return ((Get_y_dx(x + BDF_STEP_LOW) - Get_y_dx(x)) / BDF_STEP_LOW);
+    }
+  };
 
   /// Return the weight of the function (useful for
   /// applications where you need to mix different weighted ChFunctions)
@@ -106,24 +124,6 @@ class ChApi ChFunction_Sensor {
  private:
   ChQuaternion<> M_BSL;
 };
-
-template<>
-ChQuaternion<> ChFunction_Sensor<ChQuaternion<>>::Get_y_dx(const ChQuaternion<> &x) const {
-  // Todo: Check if this is correct
-  ChQuaternion<> dy = Get_y(x * M_BSL) - Get_y(x);
-  dy /= BDF_STEP_LOW;
-  dy.Normalize();
-  return dy;
-}
-
-template<>
-ChQuaternion<> ChFunction_Sensor<ChQuaternion<>>::Get_y_dxdx(const ChQuaternion<> &x) const {
-  // Todo: Check if this is correct
-  ChQuaternion<> dy = Get_y_dx(x * M_BSL) - Get_y_dx(x);
-  dy /= BDF_STEP_LOW;
-  dy.Normalize();
-  return dy;
-}
 
 } /// sensor
 } /// vehicle

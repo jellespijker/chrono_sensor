@@ -100,10 +100,10 @@ double step_size = 2e-3;
 double tire_step_size = 1e-3;
 
 // Simulation end time
-double t_end = 20;
+double t_end = 2;
 
 // Render FPS
-double fps = 60;
+double fps = 30;
 
 // Debug logging
 bool debug_output = false;
@@ -379,8 +379,8 @@ int main(int argc, char *argv[]) {
   int render_frame = 0;
 
   // Initialize Sensor
-  Accelerometer acc_sensor(my_hmmwv.GetVehicle(), 0.02);
-  acc_sensor.Initialize(12., ChVector<>(200.), ChVector<>(0.2), ChVector<>(0.2));
+  Accelerometer acc_sensor(my_hmmwv.GetVehicle(), 0.02, 0.03);
+  acc_sensor.Initialize(16., ChVector<>(200.), ChVector<>(0.2), ChVector<>(0.2));
   ChFunction_Recorder x_i;
   ChFunction_Recorder x_o;
   ChFunction_Recorder y_i;

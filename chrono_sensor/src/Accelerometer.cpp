@@ -27,7 +27,10 @@ namespace chrono {
 namespace vehicle {
 namespace sensor {
 
-Accelerometer::Accelerometer(ChVehicle &vehicle, double sample_rate) : ChSensor<ChVector<>>(vehicle, sample_rate) {
+Accelerometer::Accelerometer(ChVehicle &vehicle, const double sample_rate, const double delay) : ChSensor<ChVector<>>(
+    vehicle,
+    sample_rate,
+    delay) {
   auto noise = std::make_shared<ChFunction_SensorNoise<ChVector<>>>();
   auto digitize = std::make_shared<ChFunction_SensorDigitize<ChVector<>>>();
   m_transform.push_back(noise);
@@ -36,8 +39,8 @@ Accelerometer::Accelerometer(ChVehicle &vehicle, double sample_rate) : ChSensor<
 
 void Accelerometer::Initialize(const double &bits,
                                const ChVector<> &range,
-                               const ChVectorDynamic<> &mean,
-                               const ChVectorDynamic<> &stddev) {
+                               const ChVector<> &mean,
+                               const ChVector<> &stddev) {
   Get_DigitalTransform()->Set_Bits(bits);
   Get_DigitalTransform()->Set_Range(range);
   Get_NoiseTransform()->Set_Mean(mean);

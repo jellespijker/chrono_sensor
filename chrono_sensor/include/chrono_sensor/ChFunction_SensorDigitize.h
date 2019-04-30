@@ -24,25 +24,36 @@
 #ifndef CHRONO_SENSOR_CHFUNCTION_SENSORDIGITIZE_H
 #define CHRONO_SENSOR_CHFUNCTION_SENSORDIGITIZE_H
 
-#include <algorithm>
-#include <type_traits>
-#include "ChFunction_Sensor.h"
+#include <array>
 
-#include "chrono/core/ChVectorDynamic.h"
+#include "ChFunction_Sensor.h"
 
 namespace chrono {
 namespace vehicle {
 namespace sensor {
 template<typename T = double>
-using opt_vect_t = typename std::conditional<std::is_same<T, ChVectorDynamic<>>::value, ChVectorDynamic<>, T>::type;
+using opt_vect_t = typename std::conditional<std::is_same<T, ChQuaternion<>>::value,
+                                             ChVector<>, T>::type;
 
 template<typename T = double>
 class ChApi ChFunction_SensorDigitize : public ChFunction_Sensor<T> {
  public:
-  ChFunction_SensorDigitize<T>() : m_range(0.), m_bits(0.), m_res(0.) {};
+  ChFunction_SensorDigitize<T>() {
+    static_assert(
+        std::is_same<T, double>::value || std::is_same<T, ChVector<>>::value || std::is_same<T, ChQuaternion<>>::value,
+        "ChFunction_SensorDigitize requires a double, chrono::ChVector<double> of ChQuaternion<double> type");
+    m_range = T(0.);
+    m_bits = 0.;
+    m_res = T(0.);
+  };
 
-  ChFunction_SensorDigitize<T>(const double &bits, const opt_vect_t<T> &range) : m_range(range) {
-    Set_Bits(bits);
+  ChFunction_SensorDigitize<T>(const double &bits, const opt_vect_t<T> &range) {
+    static_assert(
+        std::is_same<T, double>::value || std::is_same<T, ChVector<>>::value || std::is_same<T, ChQuaternion<>>::value,
+        "ChFunction_SensorDigitize requires a double, chrono::ChVector<double> of ChQuaternion<double> type");
+    m_range = range;
+    m_bits = bits;
+    m_res = Calc_Resolution(m_range, m_bits);
   }
 
   ChFunction_SensorDigitize<T>(const ChFunction_SensorDigitize<T> &other)
@@ -56,8 +67,14 @@ class ChApi ChFunction_SensorDigitize : public ChFunction_Sensor<T> {
     return FUNCT_DIGITIZE;
   }
 
-  constexpr T Get_y(const T &x) const override {
-    return m_res * Round(x / m_res);
+  T Get_y(const T &x) const override {
+    if constexpr(std::is_same<T, ChQuaternion<>>::value) {
+      auto x_p = ChVector<>(x.e1(), x.e2(), x.e3());
+      auto x_d_vec = ChVector<>(m_res * Round(x_p / m_res));
+      return ChQuaternion<>(x.e0(), x_d_vec).GetNormalized();
+    } else {
+      return m_res * Round(x / m_res);
+    }
   }
 
   opt_vect_t<T> &Get_Range() const {
@@ -66,7 +83,7 @@ class ChApi ChFunction_SensorDigitize : public ChFunction_Sensor<T> {
 
   void Set_Range(const opt_vect_t<T> &Range) {
     m_range = Range;
-    Set_Resolution(m_range, m_bits);
+    m_res = Calc_Resolution(m_range, m_bits);
   }
 
   double Get_Bits() const {
@@ -75,26 +92,24 @@ class ChApi ChFunction_SensorDigitize : public ChFunction_Sensor<T> {
 
   void Set_Bits(const double Bits) {
     m_bits = Bits;
-    Set_Resolution(m_range, m_bits);
+    m_res = Calc_Resolution(m_range, m_bits);
   }
 
  protected:
-  constexpr void Set_Resolution(const opt_vect_t<T> &range, const double bits) {
-    m_res = range / pow(2., bits);
+  constexpr opt_vect_t<T> Calc_Resolution(const opt_vect_t<T> &range, const double bits) {
+    return range / pow(2., bits);
   }
 
-  constexpr opt_vect_t<T> Round(const T &x) const {
-    opt_vect_t<T> ret(x);
-    if constexpr(std::is_scalar<T>::value) {
-      ret = round(x);
+  opt_vect_t<T> Round(const opt_vect_t<T> &x) const {
+    if constexpr(std::is_same<T, double>::value) {
+      return round(x);
     } else {
-      if constexpr(std::is_same<T, ChVector<>>::value) {
-        ret.Set(round(x.x()), round(x.y()), round(x.z()));
-      } else {
-        std::for_each(ret.GetAddress()[0], ret.GetAddress()[x.GetLength()], round);
+      opt_vect_t<T> ret;
+      for (int i = 0; i < 3; ++i) {
+        ret[i] = round(x[i]);
       }
+      return ret;
     }
-    return ret;
   };
 
   opt_vect_t<T> m_range;
